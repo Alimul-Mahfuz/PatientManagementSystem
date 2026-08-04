@@ -1,0 +1,62 @@
+@model PatientManagementSystem.Models.ViewModels.ConditionViewModel
+@{
+    ViewData["Title"] = Model.Id == 0 ? "New condition" : "Edit condition";
+}
+
+<div class="pms-page-header">
+    <div>
+        <h1 class="pms-page-title">@ViewData["Title"]</h1>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="Index" class="pms-quick"><i class="bi bi-arrow-left"></i>Back</a>
+    </div>
+</div>
+
+<form asp-action="@(Model.Id == 0 ? "Create" : "Edit")" asp-route-id="@Model.Id" method="post">
+    @Html.AntiForgeryToken()
+    @if (Model.Id != 0) { <input type="hidden" asp-for="Id" /> }
+    <div class="pms-card mb-3" style="max-width:760px;">
+        <div class="pms-card-header"><i class="bi bi-heart-pulse me-2 text-primary"></i>Condition</div>
+        <div class="pms-card-body">
+            <div class="row g-3">
+                <div class="col-12 col-md-8">
+                    <label asp-for="Name" class="form-label small fw-semibold"></label>
+                    <input asp-for="Name" class="form-control" />
+                    <span asp-validation-for="Name" class="text-danger small"></span>
+                </div>
+                <div class="col-12 col-md-4">
+                    <label asp-for="Icd10Code" class="form-label small fw-semibold"></label>
+                    <input asp-for="Icd10Code" class="form-control" placeholder="e.g. J45.909" />
+                    <span asp-validation-for="Icd10Code" class="text-danger small"></span>
+                </div>
+                <div class="col-12">
+                    <label asp-for="Description" class="form-label small fw-semibold"></label>
+                    <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                </div>
+                @if (Model.Id != 0)
+                {
+                    <div class="col-12">
+                        <div class="form-check">
+                            <input asp-for="IsActive" class="form-check-input" />
+                            <label asp-for="IsActive" class="form-check-label small fw-semibold"></label>
+                        </div>
+                    </div>
+                }
+            </div>
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger mt-3"><div asp-validation-summary="ModelOnly" class="mb-0"></div></div>
+            }
+        </div>
+    </div>
+    <div class="d-flex justify-content-end gap-2">
+        <a asp-action="Index" class="btn btn-outline-secondary" style="border-radius:10px;">Cancel</a>
+        <button type="submit" class="btn btn-primary" style="border-radius:10px;padding:0.55rem 1.2rem;font-weight:600;">
+            <i class="bi bi-check-lg me-1"></i>Save
+        </button>
+    </div>
+</form>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}

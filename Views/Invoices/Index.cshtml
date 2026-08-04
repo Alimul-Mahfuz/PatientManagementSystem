@@ -1,0 +1,113 @@
+@model PatientManagementSystem.Models.ViewModels.InvoiceIndexViewModel
+@using PatientManagementSystem.Models.Enums
+@{ ViewData["Title"] = "Invoices"; }
+
+<div class="pms-page-header">
+    <div>
+        <h1 class="pms-page-title">Invoices</h1>
+        <p class="pms-page-subtitle">Generate bills, track payments, manage outstanding amounts.</p>
+    </div>
+    <div class="d-flex gap-2">
+        @if (Model.PatientId.HasValue)
+        {
+            <a asp-controller="Patients" asp-action="Details" asp-route-id="@Model.PatientId" class="pms-quick"><i class="bi bi-arrow-left"></i>Patient</a>
+        }
+        <a asp-action="Create" asp-route-patientId="@Model.PatientId" class="btn btn-primary d-inline-flex align-items-center gap-2" style="border-radius:10px;padding:0.6rem 1.1rem;font-weight:600;">
+            <i class="bi bi-file-earmark-plus"></i>New invoice
+        </a>
+    </div>
+</div>
+
+<form id="invFilters" class="pms-card mb-3">
+    <div class="pms-card-body">
+        <div class="row g-2 align-items-end">
+            <div class="col-6 col-md-3">
+                <label class="form-label small fw-semibold">Status</label>
+                <select name="status" class="form-select pms-select2" data-placeholder="All">
+                    <option value="">All</option>
+                    <option value="@((int)InvoiceStatus.Pending)">Pending</option>
+                    <option value="@((int)InvoiceStatus.Paid)">Paid</option>
+                    <option value="@((int)InvoiceStatus.Cancelled)">Cancelled</option>
+                </select>
+            </div>
+            <div class="col-6 col-md-3">
+                @if (Model.PatientId.HasValue)
+                {
+                    <input type="hidden" name="patientId" value="@Model.PatientId" />
+                }
+                else
+                {
+                    <label class="form-label small fw-semibold">Patient ID</label>
+                    <input type="number" name="patientId" class="form-control" placeholder="(optional)" />
+                }
+            </div>
+        </div>
+        <div class="d-flex justify-content-end gap-2 mt-3">
+            <button type="button" id="resetFilters" class="btn btn-outline-secondary" style="border-radius:10px;"><i class="bi bi-x-circle me-1"></i>Reset</button>
+            <button type="button" id="applyFilters" class="btn btn-primary" style="border-radius:10px;"><i class="bi bi-funnel me-1"></i>Apply</button>
+        </div>
+    </div>
+</form>
+
+<div class="pms-card">
+    <div class="pms-card-header"><i class="bi bi-receipt me-2 text-primary"></i>All invoices</div>
+    <div class="pms-card-body p-0">
+        <table id="invTable" class="pms-table" style="width:100%;">
+            <thead><tr>
+                <th>Number</th><th>Patient</th><th>Date</th><th>Status</th><th class="text-end">Total</th><th class="text-end">Actions</th>
+            </tr></thead>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    (function () {
+        var table;
+        function filters() {
+            var f = $('#invFilters');
+            return {
+                'filters[status]':    $('select[name="status"]',   f).val() || '',
+                'filters[patientId]': $('input[name="patientId"]', f).val() || ''
+            };
+        }
+        table = $('#invTable').DataTable({
+            processing: true, serverSide: true, paging: true, searching: true,
+            pageLength: 10, lengthMenu: [10, 25, 50, 100],
+            ajax: {
+                url: '@Url.Action("Search", "Invoices")', type: 'POST',
+                contentType: 'application/x-www-form-urlencoded',
+                data: function (d) { return $.extend({}, d, filters()); },
+                error: function () { toastr && toastr.error('Failed to load invoices.'); }
+            },
+            columns: [
+                { data: 'number', render: function (v) { return '<span class="fw-mono small">' + escapeHtml(v) + '</span>'; } },
+                { data: 'patientName', render: function (v, t, row) {
+                    return '<a href="/Patients/Details/' + row.patientId + '" class="text-decoration-none">' + escapeHtml(v) + '</a>'; } },
+                { data: 'invoiceDate', render: function (v) { var d = new Date(v); return isNaN(d) ? '' : d.toLocaleDateString(undefined,{day:'2-digit',month:'short',year:'numeric'}); } },
+                { data: 'status', render: function (s) {
+                    var map = { 0: ['is-warning','Pending'], 1: ['is-success','Paid'], 2: ['is-danger','Cancelled'] };
+                    var m = map[s] || ['is-muted','Pending'];
+                    return '<span class="pms-pill ' + m[0] + '">' + m[1] + '</span>'; } },
+                { data: 'totalAmount', className: 'text-end', render: function (v) { return '<span class="fw-semibold">NPR ' + Number(v).toLocaleString(undefined,{minimumFractionDigits:2}) + '</span>'; } },
+                { data: null, orderable: false, className: 'text-end text-nowrap', render: function (d, t, row) {
+                    var view = '@Url.Action("Details", "Invoices")/' + row.id;
+                    return '<a href="' + view + '" class="btn btn-sm btn-light border" title="View"><i class="bi bi-eye"></i></a>'; } }
+            ],
+            language: {
+                processing: '<div class="p-3 text-muted"><i class="bi bi-arrow-repeat me-1"></i>Loading...</div>',
+                emptyTable: '<div class="pms-empty"><i class="bi bi-inbox"></i>No invoices yet.</div>',
+                zeroRecords: '<div class="pms-empty"><i class="bi bi-search"></i>No invoices match your filters.</div>',
+                info: 'Showing _START_ to _END_ of _TOTAL_ invoices',
+                lengthMenu: '_MENU_ per page'
+            }
+        });
+        $('#applyFilters').on('click', function () { table.ajax.reload(); });
+        $('#invFilters').on('change', 'select', function () { table.ajax.reload(); });
+        $('#invFilters').on('keydown', 'input', function (e) { if (e.which === 13) { e.preventDefault(); table.ajax.reload(); } });
+        $('#resetFilters').on('click', function () { $('#invFilters')[0].reset(); $('.pms-select2','#invFilters').val('').trigger('change'); table.ajax.reload(); });
+
+        function escapeHtml(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+    })();
+</script>
+}

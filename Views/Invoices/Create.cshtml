@@ -1,0 +1,152 @@
+@model PatientManagementSystem.Models.ViewModels.InvoiceViewModel
+@{
+    ViewData["Title"] = "New invoice";
+    var patients = ViewData["Patients"] as List<SelectListItem> ?? new();
+}
+
+<div class="pms-page-header">
+    <div>
+        <h1 class="pms-page-title">New invoice</h1>
+        <p class="pms-page-subtitle"><span class="text-muted small">Number: </span><span class="fw-mono">@Model.Number</span></p>
+    </div>
+    <a asp-action="Index" class="pms-quick"><i class="bi bi-arrow-left"></i>Back</a>
+</div>
+
+<form asp-action="Create" method="post">
+    @Html.AntiForgeryToken()
+    <div class="pms-card mb-3">
+        <div class="pms-card-header"><i class="bi bi-receipt me-2 text-primary"></i>Header</div>
+        <div class="pms-card-body">
+            <div class="row g-3">
+                <div class="col-12 col-md-6">
+                    <label asp-for="PatientId" class="form-label small fw-semibold"></label>
+                    <select asp-for="PatientId" asp-items="patients" class="form-select pms-select2" data-placeholder="— Select patient —">
+                        <option value=""></option>
+                    </select>
+                    <span asp-validation-for="PatientId" class="text-danger small"></span>
+                </div>
+                <div class="col-6 col-md-3">
+                    <label asp-for="InvoiceDate" class="form-label small fw-semibold"></label>
+                    <input asp-for="InvoiceDate" class="form-control" type="date" value="@Model.InvoiceDate.ToString("yyyy-MM-dd")" />
+                </div>
+                <div class="col-6 col-md-3">
+                    <label asp-for="TaxPercent" class="form-label small fw-semibold"></label>
+                    <div class="input-group">
+                        <input asp-for="TaxPercent" class="form-control" type="number" step="0.01" min="0" max="100" />
+                        <span class="input-group-text bg-light">%</span>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <label asp-for="Notes" class="form-label small fw-semibold"></label>
+                    <input asp-for="Notes" class="form-control" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="pms-card mb-3">
+        <div class="pms-card-header d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-list-ul me-2 text-primary"></i>Line items</span>
+            <button type="button" id="addRow" class="btn btn-sm btn-outline-primary" style="border-radius:8px;"><i class="bi bi-plus-lg me-1"></i>Add line</button>
+        </div>
+        <div class="pms-card-body p-0">
+            <table class="pms-table mb-0" id="itemsTable">
+                <thead>
+                    <tr>
+                        <th style="width:55%;">Description</th>
+                        <th style="width:10%;">Qty</th>
+                        <th style="width:15%;">Unit price</th>
+                        <th style="width:15%;">Total</th>
+                        <th class="text-end" style="width:5%;"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (int i = 0; i < Model.Items.Count; i++)
+                    {
+                        var it = Model.Items[i];
+                        <tr class="item-row">
+                            <td><input name="Items[@i].Description" value="@it.Description" class="form-control form-control-sm" /></td>
+                            <td><input name="Items[@i].Quantity" value="@it.Quantity" class="form-control form-control-sm item-qty" type="number" min="1" /></td>
+                            <td><input name="Items[@i].UnitPrice" value="@it.UnitPrice" class="form-control form-control-sm item-price" type="number" step="0.01" min="0" /></td>
+                            <td class="item-total-display fw-mono small"></td>
+                            <td class="text-end"><button type="button" class="btn btn-sm btn-light border text-danger remove-row" title="Remove"><i class="bi bi-x"></i></button></td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th colspan="3" class="text-end small text-muted">Subtotal</th>
+                        <th colspan="2" class="small"><span id="subTotal"></span></th>
+                    </tr>
+                    <tr>
+                        <th colspan="3" class="text-end small text-muted">Tax</th>
+                        <th colspan="2" class="small"><span id="taxAmount"></span></th>
+                    </tr>
+                    <tr>
+                        <th colspan="3" class="text-end small fw-bold">TOTAL</th>
+                        <th colspan="2" class="fw-bold"><span id="grandTotal"></span></th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+    @if (!ViewData.ModelState.IsValid)
+    { <div class="alert alert-danger"><div asp-validation-summary="ModelOnly" class="mb-0"></div></div> }
+
+    <div class="d-flex justify-content-end gap-2">
+        <a asp-action="Index" class="btn btn-outline-secondary" style="border-radius:10px;">Cancel</a>
+        <button class="btn btn-primary" style="border-radius:10px;padding:0.55rem 1.2rem;font-weight:600;"><i class="bi bi-check-lg me-1"></i>Create invoice</button>
+    </div>
+</form>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+    <script>
+        function recalcRow(r) {
+            var qty = parseFloat($(r).find('.item-qty').val()) || 0;
+            var pr = parseFloat($(r).find('.item-price').val()) || 0;
+            var tot = (qty * pr);
+            $(r).find('.item-total-display').text('NPR ' + tot.toFixed(2));
+            return tot;
+        }
+        function reindexAndRecalc() {
+            $('#itemsTable tbody tr.item-row').each(function (i, r) {
+                $(r).find('input').each(function () {
+                    var n = $(this).attr('name');
+                    if (n && n.indexOf('Items[') >= 0) {
+                        var prop = n.split('.')[1];
+                        $(this).attr('name', 'Items[' + i + '].' + prop);
+                    }
+                });
+                recalcRow(r);
+            });
+            var sub = 0;
+            $('.item-row').each(function (_, r) { sub += recalcRow(r); });
+            var tax = parseFloat($('input[name="TaxPercent"]').val()) || 0;
+            var taxAmt = sub * (tax / 100);
+            $('#subTotal').text('NPR ' + sub.toFixed(2));
+            $('#taxAmount').text('NPR ' + taxAmt.toFixed(2));
+            $('#grandTotal').text('NPR ' + (sub + taxAmt).toFixed(2));
+        }
+        $('#itemsTable').on('input', '.item-qty, .item-price, input[name="TaxPercent"]', reindexAndRecalc);
+        $('#addRow').on('click', function () {
+            var i = $('#itemsTable tbody tr.item-row').length;
+            var html = '<tr class="item-row">' +
+                '<td><input name="Items[' + i + '].Description" value="" class="form-control form-control-sm" /></td>' +
+                '<td><input name="Items[' + i + '].Quantity" value="1" class="form-control form-control-sm item-qty" type="number" min="1" /></td>' +
+                '<td><input name="Items[' + i + '].UnitPrice" value="0" class="form-control form-control-sm item-price" type="number" step="0.01" min="0" /></td>' +
+                '<td class="item-total-display fw-mono small"></td>' +
+                '<td class="text-end"><button type="button" class="btn btn-sm btn-light border text-danger remove-row"><i class="bi bi-x"></i></button></td>' +
+                '</tr>';
+            $('#itemsTable tbody').append(html);
+            reindexAndRecalc();
+        });
+        $('#itemsTable').on('click', '.remove-row', function () {
+            if ($('#itemsTable tbody tr.item-row').length <= 1) { return; }
+            $(this).closest('.item-row').remove();
+            reindexAndRecalc();
+        });
+        reindexAndRecalc();
+    </script>
+}

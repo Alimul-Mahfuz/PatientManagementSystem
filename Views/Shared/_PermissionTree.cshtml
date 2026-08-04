@@ -1,0 +1,34 @@
+@model PatientManagementSystem.Models.ViewModels.PermissionGroupViewModel
+
+<div class="pms-card mb-3">
+    <div class="pms-card-header d-flex justify-content-between align-items-center">
+        <span class="fw-semibold">
+            <i class="bi bi-shield-check me-2 text-primary"></i>@Model.Module
+        </span>
+        <div class="form-check form-switch">
+            <input class="form-check-input pms-module-toggle" type="checkbox" role="switch"
+                   id="mod-@Model.Module.Replace(" ", "_")" />
+            <label class="form-check-label small text-muted" for="mod-@Model.Module.Replace(" ", "_")">Select all</label>
+        </div>
+    </div>
+    <div class="pms-card-body">
+        <div class="row g-2">
+            @for (int i = 0; i < Model.Permissions.Count; i++)
+            {
+                var p = Model.Permissions[i];
+                var cbId = $"perm_{p.Id}";
+                <div class="col-12 col-md-6">
+                    <div class="form-check pms-perm-check">
+                        <input class="form-check-input pms-perm-cb" type="checkbox"
+                               name="SelectedPermissionIds" value="@p.Id"
+                               id="@cbId" @(p.IsSelected ? "checked" : "") />
+                        <label class="form-check-label" for="@cbId">
+                            <span class="fw-semibold">@p.Name</span>
+                            <span class="text-muted small d-block">@p.Description</span>
+                        </label>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>

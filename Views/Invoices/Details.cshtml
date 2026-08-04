@@ -1,0 +1,96 @@
+@model PatientManagementSystem.Models.ViewModels.InvoiceViewModel
+@using PatientManagementSystem.Models.Enums
+@{
+    ViewData["Title"] = $"Invoice {Model.Number}";
+    var patientName = ViewData["PatientName"] as string ?? "—";
+    var patientMrn  = ViewData["PatientMrn"]  as string ?? "—";
+    var statusPillClass = Model.Status switch
+    {
+        InvoiceStatus.Paid => "is-success",
+        InvoiceStatus.Cancelled => "is-danger",
+        _ => "is-warning"
+    };
+}
+
+<div class="pms-page-header">
+    <div>
+        <h1 class="pms-page-title">@Model.Number <span class="pms-pill @statusPillClass ms-2">@Model.Status</span></h1>
+        <p class="pms-page-subtitle">
+            <span class="fw-semibold">@patientName</span> &middot;
+            <span class="text-muted small">@patientMrn</span> &middot;
+            <span class="text-muted small">@Model.InvoiceDate.ToString("dd MMM yyyy")</span>
+        </p>
+    </div>
+    <div class="d-flex gap-2">
+        @if (Model.Status == InvoiceStatus.Pending)
+        {
+            <form asp-action="MarkPaid" asp-route-id="@Model.Id" method="post">
+                @Html.AntiForgeryToken()
+                <button class="btn btn-success" style="border-radius:10px;"><i class="bi bi-check2-circle me-1"></i>Mark paid</button>
+            </form>
+            <form asp-action="Cancel" asp-route-id="@Model.Id" method="post" onsubmit="return confirm('Cancel this invoice?');">
+                @Html.AntiForgeryToken()
+                <button class="btn btn-outline-danger" style="border-radius:10px;"><i class="bi bi-x-circle me-1"></i>Cancel</button>
+            </form>
+        }
+        <a asp-action="Print" asp-route-id="@Model.Id" class="pms-quick" target="_blank"><i class="bi bi-eye"></i>Print Preview</a>
+        <a href="javascript:window.print()" class="pms-quick"><i class="bi bi-printer"></i>Print</a>
+        <a asp-action="Index" class="pms-quick"><i class="bi bi-arrow-left"></i>Back</a>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-12 col-lg-8">
+        <div class="pms-card mb-3">
+            <div class="pms-card-header"><i class="bi bi-list-ul me-2 text-primary"></i>Line items</div>
+            <div class="pms-card-body p-0">
+                <table class="pms-table mb-0">
+                    <thead><tr><th>Description</th><th class="text-end">Qty</th><th class="text-end">Unit price</th><th class="text-end">Total</th></tr></thead>
+                    <tbody>
+                        @foreach (var it in Model.Items)
+                        {
+                            <tr>
+                                <td>@it.Description</td>
+                                <td class="text-end">@it.Quantity</td>
+                                <td class="text-end">@it.UnitPrice.ToString("N2")</td>
+                                <td class="text-end fw-mono">@it.Total.ToString("N2")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(Model.Notes))
+        {
+            <div class="pms-card">
+                <div class="pms-card-header"><i class="bi bi-sticky me-2 text-primary"></i>Notes</div>
+                <div class="pms-card-body"><p class="mb-0 text-muted small">@Model.Notes</p></div>
+            </div>
+        }
+    </div>
+
+    <div class="col-12 col-lg-4">
+        <div class="pms-card">
+            <div class="pms-card-header"><i class="bi bi-calculator me-2 text-primary"></i>Totals</div>
+            <div class="pms-card-body">
+                <div class="d-flex justify-content-between py-2 border-bottom">
+                    <span class="text-muted">Subtotal</span>
+                    <span>NPR @Model.SubTotal.SubTotal.ToString("N2")</span>
+                </div>
+                <div class="d-flex justify-content-between py-2 border-bottom">
+                    <span class="text-muted">Tax (@Model.TaxPercent.ToString("0.##")%)</span>
+                    <span>NPR @Model.TaxAmount.ToString("N2")</span>
+                </div>
+                <div class="d-flex justify-content-between py-3">
+                    <span class="fw-bold">Total</span>
+                    <span class="fw-bold fs-5">NPR @Model.Total.ToString("N2")</span>
+                </div>
+                <div class="d-flex justify-content-between py-2">
+                    <span class="text-muted small">Created</span>
+                    <span class="text-muted small">@Model.CreatedAt.ToString("dd MMM yyyy")</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,69 @@
+@model PatientManagementSystem.Models.ViewModels.RoleViewModel
+
+@{
+    ViewData["Title"] = "Create role";
+}
+
+<div class="pms-page-header">
+    <div>
+        <h1 class="pms-page-title">Create role</h1>
+        <p class="pms-page-subtitle">Name the role and choose which permissions it grants.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="Index" class="pms-quick"><i class="bi bi-arrow-left"></i>Back</a>
+    </div>
+</div>
+
+<form asp-action="Create" method="post">
+    @Html.AntiForgeryToken()
+    <div class="pms-card mb-3">
+        <div class="pms-card-header"><i class="bi bi-card-heading me-2 text-primary"></i>Role details</div>
+        <div class="pms-card-body">
+            <div class="row g-3">
+                <div class="col-12 col-md-6">
+                    <label asp-for="Name" class="form-label small fw-semibold"></label>
+                    <input asp-for="Name" class="form-control" placeholder="e.g. Doctor, Receptionist" />
+                    <span asp-validation-for="Name" class="text-danger small"></span>
+                </div>
+                <div class="col-12 col-md-6">
+                    <label asp-for="Description" class="form-label small fw-semibold"></label>
+                    <input asp-for="Description" class="form-control" placeholder="Optional notes" />
+                    <span asp-validation-for="Description" class="text-danger samll"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h6 class="fw-bold mb-2 text-uppercase text-muted small">Permissions</h6>
+    @foreach (var grp in Model.PermissionGroups)
+    {
+        <partial name="_PermissionTree" model="grp" />
+    }
+
+    <div class="d-flex justify-content-end gap-2 mt-2">
+        <a asp-action="Index" class="btn btn-outline-secondary" style="border-radius:10px;">Cancel</a>
+        <button type="submit" class="btn btn-primary" style="border-radius:10px; padding:0.55rem 1.2rem; font-weight:600;">
+            <i class="bi bi-check-lg me-1"></i>Create role
+        </button>
+    </div>
+</form>
+
+@section Scripts {
+<script>
+    document.querySelectorAll('.pms-module-toggle').forEach(function (toggle) {
+        toggle.addEventListener('change', function () {
+            var card = this.closest('.pms-card');
+            card.querySelectorAll('.pms-perm-cb').forEach(function (cb) { cb.checked = toggle.checked; });
+        });
+    });
+    document.querySelectorAll('.pms-card').forEach(function (card) {
+        var cbs = card.querySelectorAll('.pms-perm-cb');
+        cbs.forEach(function (cb) {
+            cb.addEventListener('change', function () {
+                var allChecked = Array.from(cbs).every(c => c.checked);
+                card.querySelector('.pms-module-toggle').checked = allChecked;
+            });
+        });
+    });
+</script>
+}

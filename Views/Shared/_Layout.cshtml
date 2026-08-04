@@ -1,0 +1,79 @@
+﻿@{
+    Layout = "_BaseLayout.cshtml";
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty;
+}
+
+<header class="pms-navbar d-flex align-items-center justify-content-between sticky-top">
+    <div class="d-flex align-items-center gap-2">
+        <button type="button" id="pmsSidebarToggle" class="pms-sidebar-toggle" aria-label="Toggle sidebar" aria-expanded="true" aria-controls="pmsSidebar">
+            <i class="bi bi-list"></i>
+        </button>
+        <a class="pms-brand text-decoration-none" asp-area="" asp-controller="Home" asp-action="Index">
+            <span class="pms-brand-icon"><i class="bi bi-heart-pulse"></i></span>
+            <span>Patient<span class="text-dark">MS</span></span>
+        </a>
+    </div>
+
+    <ul class="navbar-nav flex-row align-items-center gap-2">
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <li class="nav-item dropdown">
+                <a class="pms-user-btn dropdown-toggle" href="#" role="button"
+                   data-bs-toggle="dropdown" aria-expanded="false">
+                    <span class="pms-user-avatar">@User.Identity?.Name?.FirstOrDefault().ToString().ToUpper()</span>
+                    <span class="d-none d-sm-inline">@User.Identity?.Name</span>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
+                    <li><h6 class="dropdown-header small text-muted">Signed in as</h6></li>
+                    <li><span class="dropdown-item-text small fw-semibold">@User.Identity?.Name</span></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <a class="dropdown-item" asp-area="" asp-controller="Profile" asp-action="Index">
+                            <i class="bi bi-person me-2"></i>My profile
+                        </a>
+                    </li>
+                    <li>
+                        <form class="form-inline" asp-controller="Authentication" asp-action="Logout" method="post">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="dropdown-item text-danger">
+                                <i class="bi bi-box-arrow-right me-2"></i>Logout
+                            </button>
+                        </form>
+                    </li>
+                </ul>
+            </li>
+        }
+        else
+        {
+            <li class="nav-item">
+                <a class="pms-user-btn" asp-area="" asp-controller="Authentication" asp-action="Login">
+                    <i class="bi bi-box-arrow-in-right me-1"></i>Login
+                </a>
+            </li>
+        }
+    </ul>
+</header>
+
+<div class="pms-shell">
+    <partial name="_Sidebar" model="currentController" />
+    <div class="pms-content">
+        <main role="main">
+            @RenderBody()
+        </main>
+    </div>
+</div>
+
+<footer class="pms-footer">
+    &copy; 2026 Patient Management System &middot;
+    <a asp-area="" asp-controller="Home" asp-action="Privacy" class="text-decoration-none">Privacy</a>
+</footer>
+
+@* Forward page sections up to _BaseLayout so they render AFTER the CDN
+   <script> tags (DataTables / Select2 / Toastr). Without this the IIFE in
+   Users/Index runs before $.fn.DataTable is defined. *@
+@section HeadStyles {
+    @await RenderSectionAsync("HeadStyles", required: false)
+}
+@section Scripts {
+    @await RenderSectionAsync("Scripts", required: false)
+}

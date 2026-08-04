@@ -1,0 +1,62 @@
+@model IEnumerable<PatientManagementSystem.Models.ViewModels.BedAssignmentViewModel>
+@{
+    ViewData["Title"] = "Bed assignments";
+    var patientId = ViewData["PatientId"] as int?;
+}
+
+<div class="pms-page-header">
+    <div>
+        <h1 class="pms-page-title">Bed assignments</h1>
+        <p class="pms-page-subtitle">Admit and discharge patients to beds.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="Admit" class="btn btn-primary" style="border-radius:10px;"><i class="bi bi-hospital me-1"></i>Admit patient</a>
+    </div>
+</div>
+
+<div class="pms-card">
+    <div class="pms-card-header"><i class="bi bi-grid me-2 text-primary"></i>@(patientId.HasValue ? "This patient" : "Recent") assignments</div>
+    <div class="pms-card-body p-0">
+        <div class="table-responsive">
+            <table class="pms-table mb-0">
+                <thead>
+                    <tr><th>Patient</th><th>Ward / Bed</th><th>Admitted</th><th>Discharged</th><th>Status</th><th>Notes</th><th class="text-end">Actions</th></tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr><td colspan="7"><div class="pms-empty"><i class="bi bi-inbox"></i>No assignments.</div></td></tr>
+                    }
+                    @foreach (var a in Model)
+                    {
+                        <tr>
+                            <td>
+                                <a asp-controller="Patients" asp-action="Details" asp-route-id="@a.PatientId" class="text-decoration-none">
+                                    <div class="fw-semibold">@a.PatientName</div>
+                                    <div class="text-muted small">@a.PatientMrn</div>
+                                </a>
+                            </td>
+                            <td><span class="text-muted small">@a.WardName</span> / <span class="fw-mono small">@a.BedNumber</span></td>
+                            <td><span class="text-muted small">@a.AdmissionDate.ToString("dd MMM yyyy")</span></td>
+                            <td><span class="text-muted small">@(a.DischargeDate?.ToString("dd MMM yyyy") ?? "—")</span></td>
+                            <td>
+                                @if (a.IsActive) { <span class="pms-pill is-info">Active</span> }
+                                else { <span class="pms-pill is-muted">Discharged</span> }
+                            </td>
+                            <td><span class="text-muted small">@(a.Notes ?? "—")</span></td>
+                            <td class="text-end">
+                                @if (a.IsActive)
+                                {
+                                    <form asp-action="Discharge" asp-route-id="@a.Id" method="post" onsubmit="return confirm('Discharge this patient?');">
+                                        @Html.AntiForgeryToken()
+                                        <button class="btn btn-sm btn-light border text-danger"><i class="bi bi-door-closed me-1"></i>Discharge</button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

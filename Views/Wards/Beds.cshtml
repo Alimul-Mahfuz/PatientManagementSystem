@@ -1,0 +1,65 @@
+@model IEnumerable<PatientManagementSystem.Models.ViewModels.BedViewModel>
+@using PatientManagementSystem.Models.Enums
+@{
+    ViewData["Title"] = "Ward beds";
+    var ward = ViewData["Ward"] as PatientManagementSystem.Models.Entities.Ward;
+}
+
+<div class="pms-page-header">
+    <div>
+        <h1 class="pms-page-title">@(ward?.Name ?? "Ward") beds</h1>
+        <p class="pms-page-subtitle"><span class="text-muted small">@(ward?.Floor ?? "—") floor &middot; Capacity @ward?.Capacity</span></p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-controller="Beds" asp-action="Create" asp-route-wardId="@ward?.Id" class="btn btn-primary" style="border-radius:10px;"><i class="bi bi-plus-lg me-1"></i>Add bed</a>
+        <a asp-action="Index" class="pms-quick"><i class="bi bi-arrow-left"></i>Back</a>
+    </div>
+</div>
+
+<div class="row g-3">
+    @if (!Model.Any())
+    {
+        <div class="col-12"><div class="pms-card"><div class="pms-card-body"><div class="pms-empty"><i class="bi bi-inbox"></i>No beds in this ward yet.</div></div></div></div>
+    }
+    @foreach (var b in Model)
+    {
+        var cardClass = b.Status switch
+        {
+            BedStatus.Available => "border-success",
+            BedStatus.Occupied => "border-info",
+            BedStatus.Maintenance => "border-warning",
+            _ => ""
+        };
+        var pillClass = b.Status switch { BedStatus.Available => "is-success", BedStatus.Occupied => "is-info", _ => "is-warning" };
+        <div class="col-12 col-md-4 col-xl-3">
+            <div class="pms-card @cardClass" style="border-width:2px;">
+                <div class="pms-card-body text-center">
+                    <h3 class="fw-bold mb-1">@b.Number  <span class="pms-pill @pillClass">@b.Status</span></h3>
+                    
+                    @if (b.Status == BedStatus.Occupied && !string.IsNullOrEmpty(b.CurrentPatientName))
+                    {
+                        <p class="small mt-3 mb-0 text-muted">@b.CurrentPatientName</p>
+                        <p class="small text-muted">Admitted @b.AdmittedOn?.ToString("dd MMM")</p>
+                        <a asp-controller="BedAssignments" asp-action="Index">
+                            <button class="btn btn-sm btn-outline-danger" style="border-radius:8px;"><i class="bi bi-door-closed me-1"></i>Discharge</button>
+                        </a>
+                    }
+                    @if (b.Status == BedStatus.Available)
+                    {
+                        <a asp-controller="BedAssignments" asp-action="Admit" class="btn btn-sm btn-outline-success mt-3" style="border-radius:8px;"><i class="bi bi-hospital me-1"></i>Admit</a>
+                    }
+                </div>
+                <div class="card-footer bg-transparent d-flex justify-content-end gap-1 px-3 py-2">
+                    <a asp-controller="Beds" asp-action="Edit" asp-route-id="@b.Id" class="btn btn-sm btn-light border"><i class="bi bi-pencil"></i></a>
+                    @if (b.Status != BedStatus.Occupied)
+                    {
+                        <form asp-controller="Beds" asp-action="Delete" asp-route-id="@b.Id" method="post" onsubmit="return confirm('Archive bed @b.Number?');">
+                            @Html.AntiForgeryToken()
+                            <button class="btn btn-sm btn-light border text-danger"><i class="bi bi-trash"></i></button>
+                        </form>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>

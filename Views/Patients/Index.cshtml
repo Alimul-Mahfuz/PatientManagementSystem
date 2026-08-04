@@ -1,0 +1,201 @@
+@model PatientManagementSystem.Models.ViewModels.PatientIndexViewModel
+@using PatientManagementSystem.Models.Enums
+@{
+    ViewData["Title"] = "Patients";
+}
+
+<div class="pms-page-header">
+    <div>
+        <h1 class="pms-page-title">Patients</h1>
+        <p class="pms-page-subtitle">Register and manage patient demographic records.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="Create" class="btn btn-primary d-inline-flex align-items-center gap-2" style="border-radius:10px;padding:0.6rem 1.1rem;font-weight:600;">
+            <i class="bi bi-person-plus"></i>New patient
+        </a>
+    </div>
+</div>
+
+<form id="patientFilters" class="pms-card mb-3">
+    <div class="pms-card-body">
+        <div class="row g-2 align-items-end">
+            <div class="col-12 col-md-3">
+                <label class="form-label small fw-semibold">Name</label>
+                <input type="text" name="name" class="form-control" placeholder="Search by name..." />
+            </div>
+            <div class="col-12 col-md-2">
+                <label class="form-label small fw-semibold">MRN</label>
+                <input type="text" name="mrn" class="form-control" placeholder="PMS-..." />
+            </div>
+            <div class="col-6 col-md-2">
+                <label class="form-label small fw-semibold">Phone</label>
+                <input type="text" name="phone" class="form-control" placeholder="Phone..." />
+            </div>
+            <div class="col-6 col-md-2">
+                <label class="form-label small fw-semibold">Email</label>
+                <input type="text" name="email" class="form-control" placeholder="Email..." />
+            </div>
+            <div class="col-6 col-md-2">
+                <label class="form-label small fw-semibold">Gender</label>
+                <select name="gender" class="form-select pms-select2" data-placeholder="All">
+                    <option value="">All</option>
+                    <option value="@((int)Gender.Male)">Male</option>
+                    <option value="@((int)Gender.Female)">Female</option>
+                    <option value="@((int)Gender.Other)">Other</option>
+                    <option value="@((int)Gender.Unknown)">Unknown</option>
+                </select>
+            </div>
+            <div class="col-6 col-md-1">
+                <label class="form-label small fw-semibold">Status</label>
+                <select name="status" class="form-select pms-select2" data-placeholder="All">
+                    <option value="">All</option>
+                    <option value="@((int)PatientStatus.Outpatient)">Outpatient</option>
+                    <option value="@((int)PatientStatus.Admitted)">Admitted</option>
+                    <option value="@((int)PatientStatus.Discharged)">Discharged</option>
+                </select>
+            </div>
+        </div>
+        <div class="d-flex justify-content-end gap-2 mt-3">
+            <button type="button" id="resetFilters" class="btn btn-outline-secondary" style="border-radius:10px;">
+                <i class="bi bi-x-circle me-1"></i>Reset
+            </button>
+            <button type="button" id="applyFilters" class="btn btn-primary" style="border-radius:10px;">
+                <i class="bi bi-funnel me-1"></i>Apply
+            </button>
+        </div>
+    </div>
+</form>
+
+<div class="pms-card">
+    <div class="pms-card-header"><i class="bi bi-people-fill me-2 text-primary"></i>All patients</div>
+    <div class="pms-card-body p-0">
+        <table id="patientsTable" class="pms-table" style="width:100%;">
+            <thead>
+                <tr>
+                    <th>Patient</th>
+                    <th>MRN</th>
+                    <th>Gender</th>
+                    <th>DOB</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            var table;
+            function buildFilters() {
+                var f = $('#patientFilters');
+                return {
+                    'filters[name]':   $('input[name="name"]',   f).val() || '',
+                    'filters[mrn]':    $('input[name="mrn"]',     f).val() || '',
+                    'filters[phone]':  $('input[name="phone"]',  f).val() || '',
+                    'filters[email]':  $('input[name="email"]',  f).val() || '',
+                    'filters[gender]': $('select[name="gender"]',f).val() || '',
+                    'filters[status]': $('select[name="status"]',f).val() || ''
+                };
+            }
+
+            var genderLabel = function (g) {
+                return ({ 0:'Unknown', 1:'Male', 2:'Female', 3:'Other' })[g] || 'Unknown';
+            };
+            var statusPill = function (s) {
+                var map = { 0: ['is-muted','Outpatient'], 1: ['is-info','Admitted'], 2: ['is-warning','Discharged'] };
+                var m = map[s] || ['is-muted','Outpatient'];
+                return '<span class="pms-pill ' + m[0] + '">' + m[1] + '</span>';
+            };
+
+            table = $('#patientsTable').DataTable({
+                processing: true,
+                serverSide: true,
+                paging: true,
+                searching: true,
+                pageLength: 10,
+                lengthMenu: [10, 25, 50, 100],
+                ajax: {
+                    url: '@Url.Action("Search", "Patients")',
+                    type: 'POST',
+                    contentType: 'application/x-www-form-urlencoded',
+                    data: function (d) { return $.extend({}, d, buildFilters()); },
+                    error: function () { toastr && toastr.error('Failed to load patients.'); }
+                },
+                columns: [
+                    {
+                        data: null,
+                        render: function (d, t, row) {
+                            var initials = (row.fullName || '?').split(' ')
+                                .filter(function (s) { return s.length; })
+                                .map(function (s) { return s.charAt(0).toUpperCase(); })
+                                .slice(0, 2).join('') || '?';
+                            return '<div class="d-flex align-items-center gap-2">' +
+                                '<span class="pms-avatar" style="width:34px;height:34px;font-size:0.78rem;">' + escapeHtml(initials) + '</span>' +
+                                '<div>' +
+                                '<div class="fw-semibold">' + escapeHtml(row.fullName) + '</div>' +
+                                '<div class="text-muted small">' + escapeHtml(row.email || row.phone || '') + '</div>' +
+                                '</div></div>';
+                        }
+                    },
+                    { data: 'mrn', render: function (v) { return '<span class="text-muted small fw-mono">' + escapeHtml(v) + '</span>'; } },
+                    { data: 'gender', render: genderLabel },
+                    {
+                        data: 'dateOfBirth', render: function (v) {
+                            if (!v) return '—';
+                            var dt = new Date(v); if (isNaN(dt)) return '—';
+                            return dt.toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' });
+                        }
+                    },
+                    { data: 'status', render: statusPill },
+                    {
+                        data: 'createdAt', render: function (v) {
+                            var dt = new Date(v); if (isNaN(dt)) return '';
+                            return '<span class="text-muted small">' + dt.toLocaleDateString() + '</span>';
+                        }
+                    },
+                    {
+                        data: null,
+                        orderable: false,
+                        className: 'text-end text-nowrap',
+                        render: function (d, t, row) {
+                            var viewUrl = '@Url.Action("Details", "Patients")/' + row.id;
+                            var editUrl = '@Url.Action("Edit", "Patients")/' + row.id;
+                            var delUrl = '@Url.Action("Delete", "Patients")/' + row.id;
+                            return '<a href="' + viewUrl + '" class="btn btn-sm btn-light border me-1" title="View"><i class="bi bi-eye"></i></a>'
+                                + '<a href="' + editUrl + '" class="btn btn-sm btn-light border me-1" title="Edit"><i class="bi bi-pencil"></i></a>'
+                                + '<form method="post" action="' + delUrl + '" class="d-inline" onsubmit="return confirm(\'Archive patient ' + "'" + row.fullName + "'" + '?\');">'
+                                + '<button type="submit" class="btn btn-sm btn-light border text-danger" title="Archive"><i class="bi bi-trash"></i></button>'
+                                + '</form>';
+                        }
+                    }
+                ],
+                language: {
+                    processing: '<div class="p-3 text-muted"><i class="bi bi-arrow-repeat me-1"></i>Loading...</div>',
+                    emptyTable: '<div class="pms-empty"><i class="bi bi-inbox"></i>No patients yet.</div>',
+                    zeroRecords: '<div class="pms-empty"><i class="bi bi-search"></i>No patients match your filters.</div>',
+                    info: 'Showing _START_ to _END_ of _TOTAL_ patients',
+                    lengthMenu: '_MENU_ per page'
+                }
+            });
+
+            $('#applyFilters').on('click', function () { table.ajax.reload(); });
+            $('#patientFilters').on('keydown', 'input', function (e) {
+                if (e.which === 13) { e.preventDefault(); table.ajax.reload(); }
+            });
+            $('#patientFilters').on('change', 'select', function () { table.ajax.reload(); });
+            $('#resetFilters').on('click', function () {
+                $('#patientFilters')[0].reset();
+                $('.pms-select2', '#patientFilters').val('').trigger('change');
+                table.ajax.reload();
+            });
+
+            function escapeHtml(s) {
+                if (s == null) return '';
+                return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+            }
+        })();
+    </script>
+}

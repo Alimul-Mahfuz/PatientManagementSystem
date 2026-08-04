@@ -1,0 +1,248 @@
+@model PatientManagementSystem.Models.ViewModels.UserIndexViewModel
+
+@{
+    ViewData["Title"] = "Users";
+}
+
+<div class="pms-page-header">
+    <div>
+        <h1 class="pms-page-title">Users</h1>
+        <p class="pms-page-subtitle">Manage staff accounts, roles, and access.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="Create" class="pms-quick"><i class="bi bi-person-plus"></i>New user</a>
+    </div>
+</div>
+
+@* ---- Filter form ---- *@
+<form id="userFilters" class="pms-card mb-3">
+    <div class="pms-card-body">
+        <div class="row g-2 align-items-end">
+            <div class="col-12 col-md-3">
+                <label class="form-label small fw-semibold">Name</label>
+                <input type="text" name="name" class="form-control" placeholder="Search by name..." />
+            </div>
+            <div class="col-12 col-md-3">
+                <label class="form-label small fw-semibold">Email</label>
+                <input type="text" name="email" class="form-control" placeholder="Search by email..." />
+            </div>
+            <div class="col-12 col-md-2">
+                <label class="form-label small fw-semibold">Phone</label>
+                <input type="text" name="phone" class="form-control" placeholder="Phone..." />
+            </div>
+            <div class="col-6 col-md-2">
+                <label class="form-label small fw-semibold">Role</label>
+                <select name="roleId" class="form-select pms-select2" data-placeholder="All roles">
+                    <option value="">All roles</option>
+                    @foreach (var r in Model.Roles)
+                    {
+                        <option value="@r.Id">@r.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="col-6 col-md-2">
+                <label class="form-label small fw-semibold">Status</label>
+                <select name="status" class="form-select">
+                    <option value="">All</option>
+                    <option value="active">Active</option>
+                    <option value="disabled">Disabled</option>
+                </select>
+            </div>
+        </div>
+        <div class="d-flex justify-content-end gap-2 mt-3">
+            <button type="button" id="resetFilters" class="btn btn-outline-secondary" style="border-radius:10px;">
+                <i class="bi bi-x-circle me-1"></i>Reset
+            </button>
+            <button type="button" id="applyFilters" class="btn btn-primary" style="border-radius:10px;">
+                <i class="bi bi-funnel me-1"></i>Apply
+            </button>
+        </div>
+    </div>
+</form>
+
+<div class="pms-card">
+    <div class="pms-card-header">
+        <i class="bi bi-people-fill me-2 text-primary"></i>All users
+    </div>
+    <div class="pms-card-body p-3">
+        <table id="usersTable" class="pms-table" style="width:100%;">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            var table;
+
+            function buildFilters() {
+                var f = $('#userFilters');
+                return {
+                    'filters[name]':   $('input[name="name"]',   f).val() || '',
+                    'filters[email]':  $('input[name="email"]',  f).val() || '',
+                    'filters[phone]':  $('input[name="phone"]',  f).val() || '',
+                    'filters[roleId]': $('select[name="roleId"]', f).val() || '',
+                    'filters[status]': $('select[name="status"]', f).val() || ''
+                };
+            }
+
+            table = $('#usersTable').DataTable({
+                processing: true,
+                serverSide: true,
+                paging: true,
+                searching: true,
+                pageLength: 10,
+                lengthMenu: [10, 25, 50, 100],
+                ajax: {
+                    url: '@Url.Action("Search", "Users")',
+                    type: 'POST',
+                    contentType: 'application/x-www-form-urlencoded',
+                    data: function (d) {
+                        return $.extend({}, d, buildFilters());
+                    },
+                    error: function () {
+                        alert('Failed to load users. Please try again.');
+                    }
+                },
+                columns: [
+                    {
+                        data: null,
+                        orderable: false,
+                        render: function (data, type, row) {
+                            var initials = (row.fullName || '?').split(' ')
+                                .filter(function (s) { return s.length; })
+                                .map(function (s) { return s.charAt(0).toUpperCase(); })
+                                .slice(0, 2).join('') || '?';
+                            return '<div class="d-flex align-items-center gap-2">' +
+                                '<span class="pms-avatar" style="width:34px;height:34px;font-size:0.78rem;">' + escapeHtml(initials) + '</span>' +
+                                '<div>' +
+                                '<div class="fw-semibold">' + escapeHtml(row.fullName) + '</div>' +
+                                '<div class="text-muted small">' + escapeHtml(row.email) + '</div>' +
+                                '</div></div>';
+                        }
+                    },
+                    {
+                        data: 'role',
+                        orderable: false,
+                        render: function (data) {
+                            if (!data || data === '—') {
+                                return '<span class="pms-pill is-muted">None</span>';
+                            }
+                            var cls = 'is-primary';
+                            if (/admin/i.test(data))      cls = 'is-primary';
+                            else if (/doctor/i.test(data)) cls = 'is-info';
+                            else if (/staff/i.test(data))  cls = 'is-warning';
+                            else if (/account/i.test(data)) cls = 'is-danger';
+                            return '<span class="pms-pill ' + cls + '">' + escapeHtml(data) + '</span>';
+                        }
+                    },
+                    {
+                        data: 'isActive',
+                        orderable: false,
+                        render: function (isActive) {
+                            if (isActive) {
+                                return '<span class="pms-pill is-success"><i class="bi bi-circle-fill me-1" style="font-size:0.55rem;"></i>Active</span>';
+                            }
+                            return '<span class="pms-pill is-muted"><i class="bi bi-circle-fill me-1" style="font-size:0.55rem;"></i>Disabled</span>';
+                        }
+                    },
+                    {
+                        data: 'createdAt',
+                        orderable: false,
+                        render: function (data) {
+                            var dt = new Date(data);
+                            if (isNaN(dt.getTime())) return '';
+                            return dt.toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' });
+                        }
+                    },
+                    {
+                        data: null,
+                        orderable: false,
+                        className: 'text-end text-nowrap',
+                        render: function (data, type, row) {
+                            var editUrl = '@Url.Action("Edit", "Users")/' + encodeURIComponent(row.id);
+                            var resetUrl = '@Url.Action("ResetPassword", "Users")/' + encodeURIComponent(row.id);
+                            var permsUrl = '@Url.Action("Permissions", "Users")/' + encodeURIComponent(row.id);
+                            var enableBtn = row.isActive
+                                ? '<button class="btn btn-sm btn-light border text-danger pms-row-toggle" data-id="' + row.id + '" data-isactive="1" title="Disable"><i class="bi bi-person-x"></i></button>'
+                                : '<button class="btn btn-sm btn-light border text-success pms-row-toggle" data-id="' + row.id + '" data-isactive="0" title="Enable"><i class="bi bi-person-check"></i></button>';
+                            return '<a href="' + editUrl + '" class="btn btn-sm btn-light border me-1" title="Edit"><i class="bi bi-pencil"></i></a>'
+                                + '<a href="' + resetUrl + '" class="btn btn-sm btn-light border me-1" title="Reset password"><i class="bi bi-key"></i></a>'
+                                + '<a href="' + permsUrl + '" class="btn btn-sm btn-light border me-1 text-primary" title="User permissions"><i class="bi bi-shield-check"></i></a>'
+                                + enableBtn;
+                        }
+                    }
+                ],
+                language: {
+                    processing: '<div class="p-3 text-muted"><i class="bi bi-arrow-repeat spin me-1"></i>Loading...</div>',
+                    emptyTable: '<div class="pms-empty"><i class="bi bi-inbox"></i>No matching users.</div>',
+                    zeroRecords: '<div class="pms-empty"><i class="bi bi-search"></i>No users match your filters.</div>',
+                    info: 'Showing _START_ to _END_ of _TOTAL_ users',
+                    lengthMenu: '_MENU_ per page'
+                },
+                drawCallback: function () {
+                    // Tooltip-friendly hover not required; DataTables renders plain DOM.
+                }
+            });
+
+            $('#applyFilters').on('click', function () {
+                table.ajax.reload();
+            });
+
+            // Re-submit on Enter key in any filter input.
+            $('#userFilters').on('keydown', 'input', function (e) {
+                if (e.which === 13) { e.preventDefault(); table.ajax.reload(); }
+            });
+
+            $('#userFilters').on('change', 'select', function () {
+                table.ajax.reload();
+            });
+
+            $('#resetFilters').on('click', function () {
+                $('#userFilters')[0].reset();
+                table.ajax.reload();
+            });
+
+            // Toggle active/inactive via AJAX
+            $('#usersTable tbody').on('click', '.pms-row-toggle', function () {
+                var btn = $(this);
+                if (!confirm(btn.data('isactive') == 1
+                    ? 'Disable this user? They will no longer be able to sign in.'
+                    : 'Enable this user?')) return;
+
+                $.ajax({
+                    url: '@Url.Action("ToggleStatus", "Users")',
+                    type: 'POST',
+                    data: { id: btn.data('id') }
+                }).done(function (resp) {
+                    if (resp && resp.ok) {
+                        table.ajax.reload(null, false);
+                    } else {
+                        alert((resp && resp.error) || 'Failed to update status.');
+                    }
+                }).fail(function () {
+                    alert('Failed to update status.');
+                });
+            });
+
+            function escapeHtml(s) {
+                if (s == null) return '';
+                return String(s)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            }
+        })();
+    </script>
+}

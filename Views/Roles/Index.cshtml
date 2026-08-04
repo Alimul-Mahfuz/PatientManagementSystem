@@ -1,0 +1,122 @@
+@model IEnumerable<PatientManagementSystem.Models.ViewModels.RoleViewModel>
+
+@{
+    ViewData["Title"] = "Roles";
+}
+
+<div class="pms-page-header">
+    <div>
+        <h1 class="pms-page-title">Roles</h1>
+        <p class="pms-page-subtitle">Define roles and assign module-level permissions.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="Create" class="btn btn-primary d-inline-flex align-items-center gap-2"
+           style="border-radius: 10px; padding: 0.6rem 1.1rem; font-weight: 600;">
+            <i class="bi bi-plus-lg"></i>New role
+        </a>
+    </div>
+</div>
+
+@if (TempData["Success"] is string success)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-2"></i>@success
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Error"] is string error)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle me-2"></i>@error
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="pms-card">
+    <div class="pms-card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-shield-lock me-2 text-primary"></i>All roles</span>
+        <span class="pms-pill is-muted">@Model.Count() total</span>
+    </div>
+    <div class="pms-card-body p-0">
+        <div class="table-responsive">
+            <table class="pms-table">
+                <thead>
+                    <tr>
+                        <th>Role</th>
+                        <th>Users</th>
+                        <th>Permissions</th>
+                        <th>Created</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var r in Model)
+                    {
+                        var isAdmin = string.Equals(r.Name, "Admin", StringComparison.OrdinalIgnoreCase);
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="pms-avatar" style="background:linear-gradient(135deg,#6366f1,#8b5cf6); width:34px; height:34px; font-size:0.78rem;">
+                                        <i class="bi bi-shield"></i>
+                                    </span>
+                                    <div>
+                                        <div class="fw-semibold">
+                                            @r.Name
+                                            @if (isAdmin)
+                                            {
+                                                <span class="pms-pill is-primary ms-1">Built-in</span>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><span class="pms-pill is-info">@r.UserCount</span></td>
+                            <td><span class="pms-pill is-warning">@r.PermissionCount</span></td>
+                            <td class="text-muted small">@r.CreatedAt.ToString("dd MMM yyyy")</td>
+                            <td class="text-end text-nowrap">
+                                <a asp-action="Details" asp-route-id="@r.Id" class="btn btn-sm btn-light border me-1" title="View"><i class="bi bi-eye"></i></a>
+                                <a asp-action="Edit" asp-route-id="@r.Id" class="btn btn-sm btn-light border me-1" title="Edit"><i class="bi bi-pencil"></i></a>
+                                @if (!isAdmin)
+                                {
+                                    <form asp-action="Delete" asp-route-id="@r.Id" method="post" class="d-inline"
+                                          onsubmit="return confirm('Delete role \'@r.Name\'? This cannot be undone.');">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-light border text-danger" title="Delete">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-sm btn-light border text-muted" disabled title="Built-in role">
+                                        <i class="bi bi-lock"></i>
+                                    </button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    document.querySelectorAll('.pms-module-toggle').forEach(function (toggle) {
+        toggle.addEventListener('change', function () {
+            var card = this.closest('.pms-card');
+            card.querySelectorAll('.pms-perm-cb').forEach(function (cb) { cb.checked = toggle.checked; });
+        });
+    });
+    document.querySelectorAll('.pms-card').forEach(function (card) {
+        var cbs = card.querySelectorAll('.pms-perm-cb');
+        cbs.forEach(function (cb) {
+            cb.addEventListener('change', function () {
+                var allChecked = Array.from(cbs).every(c => c.checked);
+                card.querySelector('.pms-module-toggle').checked = allChecked;
+            });
+        });
+    });
+</script>
+}

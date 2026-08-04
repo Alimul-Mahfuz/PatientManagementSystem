@@ -1,0 +1,62 @@
+@model PatientManagementSystem.Models.ViewModels.RoleViewModel
+
+@{
+    ViewData["Title"] = "Role details";
+    var isAdmin = string.Equals(Model.Name, "Admin", StringComparison.OrdinalIgnoreCase);
+}
+
+<div class="pms-page-header">
+    <div>
+        <h1 class="pms-page-title">@Model.Name</h1>
+        <p class="pms-page-subtitle">
+            <span class="pms-pill is-info">Users: @Model.UserCount</span>
+            <span class="pms-pill is-warning ms-1">Permissions: @Model.PermissionCount</span>
+        </p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary" style="border-radius:10px;">
+            <i class="bi bi-pencil me-1"></i>Edit
+        </a>
+        <a asp-action="Index" class="pms-quick"><i class="bi bi-arrow-left"></i>Back</a>
+    </div>
+</div>
+
+@if (!Model.PermissionGroups.Any())
+{
+    <div class="pms-card">
+        <div class="pms-card-body">
+            <div class="pms-empty">
+                <i class="bi bi-shield-x"></i>
+                This role has no permissions assigned yet.
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <h6 class="fw-bold mb-2 text-uppercase text-muted small">Granted permissions</h6>
+    @foreach (var grp in Model.PermissionGroups)
+    {
+        <div class="pms-card mb-3">
+            <div class="pms-card-header">
+                <i class="bi bi-shield-check me-2 text-primary"></i>@grp.Module
+            </div>
+            <div class="pms-card-body">
+                <div class="row g-2">
+                    @foreach (var p in grp.Permissions.Where(x => x.IsSelected))
+                    {
+                        <div class="col-12 col-md-6">
+                            <div class="d-flex align-items-start gap-2">
+                                <i class="bi bi-check-circle-fill text-success mt-1"></i>
+                                <div>
+                                    <div class="fw-semibold">@p.Name</div>
+                                    <small class="text-muted">@p.Description</small>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+}

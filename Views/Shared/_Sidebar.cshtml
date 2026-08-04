@@ -1,0 +1,32 @@
+@model string
+@{
+    var current = Model ?? string.Empty;
+    var items = new[]
+    {
+        new { C = "Home",         A = "Index", Label = "Dashboard",  Icon = "bi-speedometer2" },
+        new { C = "Patients",     A = "Index", Label = "Patients",    Icon = "bi-people" },
+        new { C = "Conditions",   A = "Index", Label = "Conditions", Icon = "bi-heart-pulse" },
+        new { C = "Wards",        A = "Index", Label = "Wards",       Icon = "bi-door-open" },
+        new { C = "Invoices",     A = "Index", Label = "Billing",     Icon = "bi-receipt" },
+        new { C = "Users",        A = "Index", Label = "Users",       Icon = "bi-person-gear" },
+        new { C = "Roles",        A = "Index", Label = "Roles",        Icon = "bi-shield-lock" },
+    };
+}
+<aside class="pms-sidebar" id="pmsSidebar">
+    <div class="pms-sidebar-header">Main menu</div>
+    <nav class="nav flex-column">
+        @foreach (var it in items)
+        {
+            var active = string.Equals(it.C, current, StringComparison.OrdinalIgnoreCase);
+            <a class="pms-sidebar-link @(active ? "active" : "")"
+               asp-area="" asp-controller="@it.C" asp-action="@it.A">
+                <i class="bi @it.Icon"></i>
+                <span>@it.Label</span>
+            </a>
+        }
+    </nav>
+    <div class="pms-sidebar-footer">
+        <i class="bi bi-clock-history me-1"></i>v1.0.0 &middot; Dev
+    </div>
+</aside>
+<div class="pms-sidebar-backdrop" id="pmsSidebarBackdrop" data-bs-toggle="collapse" data-bs-target="#pmsSidebar"></div>

@@ -1,0 +1,59 @@
+﻿@{
+    // Core HTML skeleton shared by all layouts (auth pages may bypass this entirely
+    // by setting Layout = null, or use this for head/script consistency).
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - PatientManagementSystem</title>
+    <script type="importmap"></script>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.3.8/css/dataTables.bootstrap5.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastr@2.1.4/build/toastr.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/PatientManagementSystem.styles.css" asp-append-version="true" />
+    @await RenderSectionAsync("HeadStyles", required: false)
+</head>
+<body>
+    @RenderBody()
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.datatables.net/2.3.8/js/dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/2.3.8/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/toastr@2.1.4/build/toastr.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    @{
+        var tSuccess = TempData["Success"] as string;
+        var tError   = TempData["Error"]   as string;
+        var tWarning = TempData["Warning"] as string;
+        var tInfo    = TempData["Info"]    as string;
+    }
+    <script>
+        $(function () {
+            if (typeof toastr === 'undefined') return;
+            toastr.options = {
+                closeButton: true,
+                progressBar: true,
+                timeOut: 4000,
+                extendedTimeOut: 2000,
+                positionClass: 'toast-top-right',
+                toastClass: 'pms-toast'
+            };
+            @if (!string.IsNullOrEmpty(tSuccess)) {<text>toastr.success(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(tSuccess)), "Success");</text>}
+            @if (!string.IsNullOrEmpty(tError))   {<text>toastr.error(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(tError)), "Error");</text>}
+            @if (!string.IsNullOrEmpty(tWarning)) {<text>toastr.warning(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(tWarning)), "Warning");</text>}
+            @if (!string.IsNullOrEmpty(tInfo))    {<text>toastr.info(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(tInfo)), "Info");</text>}
+        });
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

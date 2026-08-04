@@ -1,0 +1,13 @@
+using Microsoft.AspNetCore.Identity;
+
+namespace PatientManagementSystem.Models.Entities
+{
+    public class RolePermission
+    {
+        public string RoleId { get; set; } = string.Empty;
+        public IdentityRole Role { get; set; } = null!;
+        public int PermissionId { get; set; }
+        public Permission Permission { get; set; } = null!;
+        public DateTime GrantedAt { get; set; } = DateTime.UtcNow;
+    }
+}

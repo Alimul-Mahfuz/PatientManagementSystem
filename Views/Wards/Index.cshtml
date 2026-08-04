@@ -1,0 +1,60 @@
+@model IEnumerable<PatientManagementSystem.Models.ViewModels.WardViewModel>
+@{
+    ViewData["Title"] = "Wards";
+}
+
+<div class="pms-page-header">
+    <div>
+        <h1 class="pms-page-title">Wards</h1>
+        <p class="pms-page-subtitle">Manage hospital wards, beds, and occupancy.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-controller="BedAssignments" asp-action="Admit" class="pms-quick"><i class="bi bi-hospital"></i>Admit</a>
+        <a asp-action="Create" class="btn btn-primary d-inline-flex align-items-center gap-2" style="border-radius:10px;padding:0.6rem 1.1rem;font-weight:600;">
+            <i class="bi bi-plus-lg"></i>New ward
+        </a>
+    </div>
+</div>
+
+<div class="row g-3">
+    @if (!Model.Any())
+    {
+        <div class="col-12"><div class="pms-card"><div class="pms-card-body"><div class="pms-empty"><i class="bi bi-inbox"></i>No wards yet.</div></div></div></div>
+    }
+    @foreach (var w in Model)
+    {
+        var occupiedPct = w.BedCount == 0 ? 0 : (int)(100.0 * w.OccupiedBeds / w.BedCount);
+        <div class="col-12 col-md-6 col-xl-4">
+            <div class="pms-card">
+                <div class="pms-card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h5 class="fw-bold mb-0">@w.Name</h5>
+                            <span class="text-muted small"><i class="bi bi-building me-1"></i>@(w.Floor ?? "—") floor</span>
+                        </div>
+                        <span class="pms-pill is-info">@w.BedCount beds</span>
+                    </div>
+                    <p class="text-muted small mt-2">@(w.Description ?? "—")</p>
+                    <hr>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="small fw-semibold">Occupancy</span>
+                        <span class="small text-muted">@w.OccupiedBeds / @w.BedCount @if(w.AvailableBeds > 0){<span class="text-success">(@w.AvailableBeds open)</span>}</span>
+                    </div>
+                    <div class="progress" style="height:6px;border-radius:3px;">
+                        <div class="progress-bar bg-@(occupiedPct >= 80 ? "danger" : (occupiedPct >= 50 ? "warning" : "success"))" style="width:@occupiedPct%"></div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent d-flex justify-content-between align-items-center px-3 py-2">
+                    <a asp-action="Beds" asp-route-id="@w.Id" class="btn btn-sm btn-outline-primary" style="border-radius:8px;"><i class="bi bi-grid-3x3-gap me-1"></i>View beds</a>
+                    <div class="d-flex gap-1">
+                        <a asp-action="Edit" asp-route-id="@w.Id" class="btn btn-sm btn-light border" title="Edit ward"><i class="bi bi-pencil"></i></a>
+                        <form asp-action="Delete" asp-route-id="@w.Id" method="post" onsubmit="return confirm('Archive ward \'@w.Name\'?');">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm btn-light border text-danger" title="Archive"><i class="bi bi-trash"></i></button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>

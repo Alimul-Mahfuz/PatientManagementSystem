@@ -1,0 +1,84 @@
+@model PatientManagementSystem.Models.ViewModels.UserEditViewModel
+@{
+    ViewData["Title"] = "Edit user";
+}
+
+<div class="pms-page-header">
+    <div>
+        <h1 class="pms-page-title">Edit user</h1>
+        <p class="pms-page-subtitle">@Model.FullName &middot; <span class="text-muted small">@Model.Email</span></p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="ResetPassword" asp-route-id="@Model.Id" class="pms-quick"><i class="bi bi-key"></i>Reset password</a>
+        <a asp-action="Index" class="pms-quick"><i class="bi bi-arrow-left"></i>Back</a>
+    </div>
+</div>
+
+<form asp-action="Edit" asp-route-id="@Model.Id" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+
+    <div class="pms-card mb-3">
+        <div class="pms-card-header"><i class="bi bi-person-gear me-2 text-primary"></i>Profile</div>
+        <div class="pms-card-body">
+            <div class="row g-3">
+                <div class="col-12 col-md-6">
+                    <label asp-for="FullName" class="form-label small fw-semibold"></label>
+                    <input asp-for="FullName" class="form-control" />
+                    <span asp-validation-for="FullName" class="text-danger small"></span>
+                </div>
+                <div class="col-12 col-md-6">
+                    <label asp-for="Email" class="form-label small fw-semibold"></label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light"><i class="bi bi-envelope"></i></span>
+                        <input asp-for="Email" class="form-control" autocomplete="off" />
+                    </div>
+                    <small class="text-muted">Changing the email also updates the sign-in handle.</small>
+                </div>
+                <div class="col-12 col-md-6">
+                    <label asp-for="PhoneNumber" class="form-label small fw-semibold"></label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light"><i class="bi bi-telephone"></i></span>
+                        <input asp-for="PhoneNumber" class="form-control" autocomplete="off" />
+                    </div>
+                    <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
+                </div>
+                <div class="col-12 col-md-6">
+                    <label asp-for="RoleId" class="form-label small fw-semibold"></label>
+                    <select asp-for="RoleId" asp-items="@(new SelectList(Model.Roles, "Id", "Name"))" class="form-select pms-select2">
+                        <option value="">— No role —</option>
+                    </select>
+                    <span asp-validation-for="RoleId" class="text-danger small"></span>
+                </div>
+                <div class="col-12 col-md-6">
+                    <label class="form-label small fw-semibold">Created</label>
+                    <input type="text" class="form-control" value="@Model.CreatedAt.ToString("dd MMM yyyy")" readonly />
+                </div>
+                <div class="col-12 col-md-6 d-flex align-items-end">
+                    <div class="form-check">
+                        <input asp-for="IsActive" class="form-check-input" />
+                        <label asp-for="IsActive" class="form-check-label small fw-semibold"></label>
+                    </div>
+                </div>
+            </div>
+
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger mt-3 mb-0">
+                    <div asp-validation-summary="ModelOnly" class="mb-0"></div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2">
+        <a asp-action="Index" class="btn btn-outline-secondary" style="border-radius:10px;">Cancel</a>
+        <button type="submit" class="btn btn-primary" style="border-radius:10px; padding:0.55rem 1.2rem; font-weight:600;">
+            <i class="bi bi-save me-1"></i>Save changes
+        </button>
+    </div>
+</form>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}

@@ -1,0 +1,112 @@
+@model PatientManagementSystem.Models.ViewModels.UserPermissionsViewModel
+@{
+    ViewData["Title"] = "User permissions";
+}
+
+<div class="pms-page-header">
+    <div>
+        <h1 class="pms-page-title">User permissions</h1>
+        <p class="pms-page-subtitle">
+            <span class="fw-semibold">@Model.FullName</span>
+            &middot; <span class="text-muted small">@Model.Email</span>
+            &middot; <span class="pms-pill is-info">@Model.RoleName</span>
+        </p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="Index" class="pms-quick"><i class="bi bi-arrow-left"></i>Back</a>
+    </div>
+</div>
+
+<div class="alert alert-info py-2" style="border-radius:10px;">
+    <i class="bi bi-info-circle me-1"></i>
+    Each permission can be <b>Inherit</b> (use the role grant), <b>Allow</b> (override and grant), or
+    <b>Deny</b> (override and block). Inherited permissions are shown with a small <span class="pms-pill is-success">role</span> tag.
+</div>
+
+<form asp-action="Permissions" asp-route-id="@Model.Id" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+
+    @for (int gi = 0; gi < Model.Groups.Count; gi++)
+    {
+        var group = Model.Groups[gi];
+        <div class="pms-card mb-3">
+            <div class="pms-card-header d-flex justify-content-between align-items-center">
+                <span class="fw-semibold">
+                    <i class="bi bi-shield-check me-2 text-primary"></i>@group.Module
+                </span>
+                <button type="button" class="btn btn-sm btn-outline-secondary pms-group-reset" style="border-radius:8px;">
+                    Set all to Inherit
+                </button>
+            </div>
+            <div class="pms-card-body">
+                <div class="table-responsive">
+                    <table class="pms-table mb-0">
+                        <thead>
+                            <tr>
+                                <th style="width:45%;">Permission</th>
+                                <th>Role</th>
+                                <th class="text-end">Override</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (int pi = 0; pi < group.Permissions.Count; pi++)
+                            {
+                                var p = group.Permissions[pi];
+                                var fieldPrefix = $"Groups[{gi}].Permissions[{pi}]";
+                                <tr>
+                                    <td>
+                                        <div class="fw-semibold small">@p.Name</div>
+                                        <div class="text-muted small">@p.Description</div>
+                                        <input type="hidden" name="@(fieldPrefix).Id" value="@p.Id" />
+                                        <input type="hidden" name="@(fieldPrefix).Key" value="@p.Key" />
+                                        <input type="hidden" name="@(fieldPrefix).Name" value="@p.Name" />
+                                        <input type="hidden" name="@(fieldPrefix).Description" value="@p.Description" />
+                                        <input type="hidden" name="@(fieldPrefix).InheritedFromRole" value="@p.InheritedFromRole" />
+                                    </td>
+                                    <td>
+                                        @if (p.InheritedFromRole)
+                                        {
+                                            <span class="pms-pill is-success"><i class="bi bi-check2"></i>Granted</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="pms-pill is-muted">—</span>
+                                        }
+                                    </td>
+                                    <td class="text-end">
+                                        <select name="@(fieldPrefix).State" class="form-select form-select-sm pms-perm-state" style="width:auto; display:inline-block;">
+                                            <option value="inherit" selected="@(p.State == "inherit")">Inherit</option>
+                                            <option value="allow" selected="@(p.State == "allow")">Allow</option>
+                                            <option value="deny" selected="@(p.State == "deny")">Deny</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="d-flex justify-content-end gap-2 mt-2">
+        <a asp-action="Index" class="btn btn-outline-secondary" style="border-radius:10px;">Cancel</a>
+        <button type="submit" class="btn btn-primary" style="border-radius:10px; padding:0.55rem 1.2rem; font-weight:600;">
+            <i class="bi bi-save me-1"></i>Save permissions
+        </button>
+    </div>
+</form>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('.pms-group-reset').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var card = this.closest('.pms-card');
+                card.querySelectorAll('.pms-perm-state').forEach(function (sel) {
+                    sel.value = 'inherit';
+                });
+            });
+        });
+    </script>
+}

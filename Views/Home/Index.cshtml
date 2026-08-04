@@ -1,0 +1,115 @@
+﻿@model PatientManagementSystem.Controllers.DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+    var now = DateTime.Now;
+}
+
+<div class="pms-page-header">
+    <div>
+        <h1 class="pms-page-title">Welcome back, @User.Identity?.Name</h1>
+        <p class="pms-page-subtitle">
+            <i class="bi bi-calendar3 me-1"></i>@now.ToString("dddd, dd MMM yyyy") &middot;
+            <i class="bi bi-clock me-1"></i>@now.ToString("hh:mm tt")
+        </p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-controller="Patients" asp-action="Create" class="pms-quick"><i class="bi bi-person-plus"></i>New patient</a>
+        <a asp-controller="Invoices" asp-action="Create" class="pms-quick"><i class="bi bi-receipt"></i>New invoice</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="pms-stat">
+            <span class="pms-stat-icon is-primary"><i class="bi bi-people-fill"></i></span>
+            <div>
+                <p class="pms-stat-label">Total patients</p>
+                <p class="pms-stat-value">@Model.TotalPatients</p>
+                <p class="pms-stat-trend up"><i class="bi bi-hospital"></i>@Model.AdmittedPatients admitted</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="pms-stat">
+            <span class="pms-stat-icon is-info"><i class="bi bi-door-closed-fill"></i></span>
+            <div>
+                <p class="pms-stat-label">Beds occupied</p>
+                <p class="pms-stat-value">@Model.OccupiedBeds / @Model.TotalBeds</p>
+                <p class="pms-stat-trend">@(Model.TotalBeds == 0 ? 0 : (int)(100.0 * Model.OccupiedBeds / Model.TotalBeds))% occupancy</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="pms-stat">
+            <span class="pms-stat-icon is-warning"><i class="bi bi-exclamation-circle-fill"></i></span>
+            <div>
+                <p class="pms-stat-label">Pending invoices</p>
+                <p class="pms-stat-value">@Model.PendingInvoices</p>
+                <p class="pms-stat-trend">Awaits payment</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="pms-stat">
+            <span class="pms-stat-icon is-success"><i class="bi bi-cash-coin"></i></span>
+            <div>
+                <p class="pms-stat-label">Revenue (month)</p>
+                <p class="pms-stat-value">NPR @Model.MonthRevenue.ToString("N0")</p>
+                <p class="pms-stat-trend up">@now.ToString("MMMM") paid invoices</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-12 col-xl-8">
+        <div class="pms-card">
+            <div class="pms-card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-clock-history me-2 text-primary"></i>Recent admissions</span>
+                <a asp-controller="BedAssignments" asp-action="Index" class="small text-decoration-none">View all</a>
+            </div>
+            <div class="pms-card-body p-0">
+                <table class="pms-table">
+                    <thead>
+                        <tr>
+                            <th>Patient</th>
+                            <th>MRN</th>
+                            <th>Ward / Bed</th>
+                            <th class="text-end">Admitted</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.RecentAdmissions.Any())
+                        {
+                            <tr><td colspan="4"><div class="pms-empty"><i class="bi bi-inbox"></i>No active admissions yet.</div></td></tr>
+                        }
+                        @foreach (var a in Model.RecentAdmissions)
+                        {
+                            <tr>
+                                <td><span class="fw-semibold">@a.PatientName</span></td>
+                                <td><span class="text-muted small fw-mono">@a.PatientMrn</span></td>
+                                <td><span class="text-muted small">@a.Ward</span> / <span class="fw-mono small">@a.BedNumber</span></td>
+                                <td class="text-end"><span class="text-muted small">@a.AdmittedOn.ToString("dd MMM yyyy")</span></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-xl-4">
+        <div class="pms-card h-100">
+            <div class="pms-card-header">
+                <i class="bi bi-grid-3x3-gap me-2 text-primary"></i>Quick actions
+            </div>
+            <div class="pms-card-body d-grid gap-2">
+                <a asp-controller="Patients" asp-action="Create" class="pms-quick"><i class="bi bi-person-vcard"></i>Register patient</a>
+                <a asp-controller="BedAssignments" asp-action="Admit" class="pms-quick"><i class="bi bi-house-add"></i>Admit to ward</a>
+                <a asp-controller="PatientConditions" asp-action="Index" class="pms-quick"><i class="bi bi-clipboard2-pulse"></i>Record condition</a>
+                <a asp-controller="Invoices" asp-action="Create" class="pms-quick"><i class="bi bi-receipt-cutoff"></i>Create invoice</a>
+                <a asp-controller="Users" asp-action="Index" class="pms-quick"><i class="bi bi-person-gear"></i>Manage users</a>
+            </div>
+        </div>
+    </div>
+</div>

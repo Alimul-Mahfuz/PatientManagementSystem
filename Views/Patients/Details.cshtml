@@ -1,0 +1,85 @@
+@model PatientManagementSystem.Models.ViewModels.PatientDetailsViewModel
+@using PatientManagementSystem.Models.Enums
+@{
+    ViewData["Title"] = "Patient details";
+    var statusPillClass = Model.Status switch
+    {
+        PatientStatus.Admitted => "is-info",
+        PatientStatus.Discharged => "is-warning",
+        _ => "is-muted"
+    };
+}
+
+<div class="pms-page-header">
+    <div>
+        <h1 class="pms-page-title">@Model.FullName</h1>
+        <p class="pms-page-subtitle">
+            <span class="text-muted small">@Model.Mrn</span>
+            &middot; <span class="pms-pill @statusPillClass">@Model.Status</span>
+            @if (!Model.IsActive)
+            { <span class="pms-pill is-muted ms-1">Archived</span> }
+        </p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary" style="border-radius:10px;"><i class="bi bi-pencil me-1"></i>Edit</a>
+        <a asp-action="Index" class="pms-quick"><i class="bi bi-arrow-left"></i>Back</a>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-12 col-lg-8">
+        <div class="pms-card mb-3">
+            <div class="pms-card-header"><i class="bi bi-person-vcard me-2 text-primary"></i>Identity</div>
+            <div class="pms-card-body p-0">
+                <table class="pms-table mb-0">
+                    <tbody>
+                        <tr><th class="text-muted small fw-semibold" style="width:30%;">Full name</th><td>@Model.FullName</td></tr>
+                        <tr><th class="text-muted small fw-semibold">MRN</th><td><span class="fw-mono">@Model.Mrn</span></td></tr>
+                        <tr><th class="text-muted small fw-semibold">Gender</th><td>@Model.Gender</td></tr>
+                        <tr><th class="text-muted small fw-semibold">Date of birth</th><td>@(Model.DateOfBirth?.ToString("dd MMM yyyy") ?? "—") <span class="text-muted small">(Age @Model.Age)</span></td></tr>
+                        <tr><th class="text-muted small fw-semibold">Blood group</th><td>@(Model.BloodGroup ?? "—")</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="pms-card mb-3">
+            <div class="pms-card-header"><i class="bi bi-telephone me-2 text-primary"></i>Contact</div>
+            <div class="pms-card-body p-0">
+                <table class="pms-table mb-0">
+                    <tbody>
+                        <tr><th class="text-muted small fw-semibold" style="width:30%;">Phone</th><td>@(Model.Phone ?? "—")</td></tr>
+                        <tr><th class="text-muted small fw-semibold">Email</th><td>@(Model.Email ?? "—")</td></tr>
+                        <tr><th class="text-muted small fw-semibold">Address</th><td>@(Model.Address ?? "—")</td></tr>
+                        <tr><th class="text-muted small fw-semibold">Emergency contact</th><td>@(Model.EmergencyContact ?? "—")</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="pms-card">
+            <div class="pms-card-header"><i class="bi bi-heart-pulse me-2 text-primary"></i>Medical</div>
+            <div class="pms-card-body p-0">
+                <table class="pms-table mb-0">
+                    <tbody>
+                        <tr><th class="text-muted small fw-semibold" style="width:30%;">Allergies</th><td>@(Model.Allergies ?? "—")</td></tr>
+                        <tr><th class="text-muted small fw-semibold">Status</th><td><span class="pms-pill @statusPillClass">@Model.Status</span></td></tr>
+                        <tr><th class="text-muted small fw-semibold">Created</th><td><span class="text-muted small">@Model.CreatedAt.ToString("dd MMM yyyy")</span></td></tr>
+                        <tr><th class="text-muted small fw-semibold">Last updated</th><td><span class="text-muted small">@(Model.UpdatedAt?.ToString("dd MMM yyyy") ?? "—")</span></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-4">
+        <div class="pms-card">
+            <div class="pms-card-header"><i class="bi bi-grid-3x3-gap me-2 text-primary"></i>Quick actions</div>
+            <div class="pms-card-body d-grid gap-2">
+                <a asp-controller="PatientConditions" asp-action="Index" asp-route-patientId="@Model.Id" class="pms-quick"><i class="bi bi-clipboard2-pulse"></i>Conditions</a>
+                <a asp-controller="BedAssignments" asp-action="Index" asp-route-patientId="@Model.Id" class="pms-quick"><i class="bi bi-hospital"></i>Bed assignment</a>
+                <a asp-controller="Invoices" asp-action="Index" asp-route-patientId="@Model.Id" class="pms-quick"><i class="bi bi-receipt"></i>Invoices</a>
+            </div>
+        </div>
+    </div>
+</div>

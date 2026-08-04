@@ -1,0 +1,23 @@
+@{
+    ViewData["Title"] = "Access denied";
+    Layout = "_BaseLayout";
+}
+
+<div class="d-flex justify-content-center align-items-center min-vh-100 bg-light">
+    <div class="card shadow-sm border-0 text-center" style="max-width: 420px; border-radius: 12px;">
+        <div class="card-body p-5">
+            <div class="d-inline-flex align-items-center justify-content-center bg-warning text-white rounded-circle mb-3"
+                 style="width: 56px; height: 56px;">
+                <i class="bi bi-shield-lock fs-3"></i>
+            </div>
+            <h4 class="fw-bold mb-2">Access denied</h4>
+            <p class="text-muted small mb-4">
+                You don't have permission to view this page. If you believe this is an error,
+                contact an administrator.
+            </p>
+            <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back to dashboard
+            </a>
+        </div>
+    </div>
+</div>
