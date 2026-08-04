@@ -1,6 +1,5 @@
 ﻿@{
     Layout = "_BaseLayout.cshtml";
-    var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty;
 }
 
 <header class="pms-navbar d-flex align-items-center justify-content-between sticky-top">
@@ -55,7 +54,7 @@
 </header>
 
 <div class="pms-shell">
-    <partial name="_Sidebar" model="currentController" />
+    <partial name="_Sidebar" />
     <div class="pms-content">
         <main role="main">
             @RenderBody()

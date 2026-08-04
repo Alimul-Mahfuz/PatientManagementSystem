@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using PatientManagementSystem.Data;
 using PatientManagementSystem.Data.Seeders;
 using PatientManagementSystem.Models.Entities;
+using PatientManagementSystem.Services;
 using QuestPDF.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,6 +14,8 @@ QuestPDF.Settings.License = LicenseType.Community;
 // EF Core DbContext.
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddScoped<SidebarProviderService>();
 
 // Identity (cookies; UI views not used, we serve our own Login.cshtml).
 

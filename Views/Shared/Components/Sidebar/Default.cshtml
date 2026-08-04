@@ -1,0 +1,17 @@
+﻿@using PatientManagementSystem.Models.ViewModels
+@model IEnumerable<SidebarItem>
+@{
+    var current = ViewContext.RouteData.Values["controller"]?.ToString();
+}
+
+<nav class="nav flex-column">
+    @foreach (var it in Model)
+    {
+        var active = string.Equals(it.C, current, StringComparison.OrdinalIgnoreCase);
+        <a class="pms-sidebar-link @(active ? "active" : "")"
+           asp-area="" asp-controller="@it.C" asp-action="@it.A">
+            <i class="bi @it.Icon"></i>
+            <span>@it.Label</span>
+        </a>
+    }
+</nav>
