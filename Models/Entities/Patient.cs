@@ -18,7 +18,10 @@ namespace PatientManagementSystem.Models.Entities
         public string? EmergencyContact { get; set; }
         public string? BloodGroup { get; set; }
         public string? Allergies { get; set; }
+        public string? ImagePath { get; set; }
         public PatientStatus Status { get; set; } = PatientStatus.Outpatient;
+
+        public ICollection<PatientReport> Reports { get; set; } = new List<PatientReport>();
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }

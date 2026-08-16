@@ -24,7 +24,7 @@
             <div class="row g-3 align-items-end">
                 <div class="col-12 col-md-4">
                     <label asp-for="ConditionId" class="form-label small fw-semibold">Condition</label>
-                    <select asp-for="ConditionId" class="form-select pms-select2" data-placeholder="— Select condition —">
+                    <select asp-for="ConditionId" class="form-select pms-select2" data-placeholder="— Select condition —" required>
                         <option value=""></option>
                         @foreach (var c in Model.AvailableConditions)
                         {

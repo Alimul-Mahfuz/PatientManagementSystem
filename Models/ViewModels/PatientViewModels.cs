@@ -72,6 +72,12 @@ namespace PatientManagementSystem.Models.ViewModels
         [Display(Name = "Allergies")]
         public string? Allergies { get; set; }
 
+        [Display(Name = "Patient image")]
+        public IFormFile? PatientImage { get; set; }
+
+        [Display(Name = "Report")]
+        public IFormFile? Report { get; set; }
+
         [Display(Name = "Status")]
         public PatientStatus Status { get; set; } = PatientStatus.Outpatient;
     }
@@ -101,9 +107,20 @@ namespace PatientManagementSystem.Models.ViewModels
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
 
+        public string? ImagePath { get; set; }
+        public List<PatientReportViewModel> Reports { get; set; } = new();
+
         public int Age => DateOfBirth.HasValue
             ? (int)((DateTime.UtcNow - DateOfBirth.Value).TotalDays / 365.25)
             : 0;
+    }
+
+    public class PatientReportViewModel
+    {
+        public int Id { get; set; }
+        public string OriginalFileName { get; set; } = string.Empty;
+        public string ContentType { get; set; } = string.Empty;
+        public DateTime UploadedAt { get; set; }
     }
 
     public class PatientDataTablesRequest

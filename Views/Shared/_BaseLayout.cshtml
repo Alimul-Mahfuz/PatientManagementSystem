@@ -45,7 +45,7 @@
                 timeOut: 4000,
                 extendedTimeOut: 2000,
                 positionClass: 'toast-top-right',
-                toastClass: 'pms-toast'
+                toastClass: 'toast pms-toast'
             };
             @if (!string.IsNullOrEmpty(tSuccess)) {<text>toastr.success(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(tSuccess)), "Success");</text>}
             @if (!string.IsNullOrEmpty(tError))   {<text>toastr.error(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(tError)), "Error");</text>}

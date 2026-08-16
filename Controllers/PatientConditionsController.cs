@@ -67,7 +67,9 @@ namespace PatientManagementSystem.Controllers
         {
             if (vm.PatientId <= 0 || vm.ConditionId <= 0)
             {
-                TempData["Error"] = "Select a patient and a condition.";
+                TempData["Error"] = vm.PatientId <= 0
+                    ? "Select a patient and a condition."
+                    : "Select a condition.";
                 return RedirectToAction(nameof(Index), new { patientId = vm.PatientId });
             }
             if (await _db.PatientConditions.AnyAsync(pc => pc.PatientId == vm.PatientId && pc.ConditionId == vm.ConditionId))

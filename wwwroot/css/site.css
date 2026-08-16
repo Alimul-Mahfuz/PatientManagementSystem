@@ -227,6 +227,14 @@ body.pms-sidebar-collapsed .pms-sidebar-link span { display: none; }
 }
 .pms-card .pms-card-body { padding: 1.25rem; }
 
+/* Dense bed board cards. */
+.pms-bed-card { padding: 0.35rem; border-radius: 12px; }
+.pms-bed-card .pms-card-body { padding: 0.7rem 0.35rem 0.55rem; }
+.pms-bed-card h3 { font-size: 1.35rem; }
+.pms-bed-card .pms-pill { font-size: 0.7rem; padding: 0.2rem 0.5rem; }
+.pms-bed-card .btn { font-size: 0.78rem; padding: 0.25rem 0.5rem; }
+.pms-bed-card .card-footer .btn { width: 34px; height: 32px; padding: 0.2rem; }
+
 /* Stat cards */
 .pms-stat {
   display: flex;
@@ -466,7 +474,12 @@ body.pms-sidebar-collapsed .pms-sidebar-link span { display: none; }
 .dataTables_wrapper .dataTables_info { color: var(--pms-text-muted); font-size: 0.85rem; }
 
 /* ---------- Toastr ---------- */
-.pms-toast.toast {
+#toast-container {
+    top: 5rem;
+    right: 1rem;
+    z-index: 9999;
+}
+.pms-toast {
     border-radius: 10px;
     box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
     border: 0;
@@ -483,4 +496,3 @@ body.pms-sidebar-collapsed .pms-sidebar-link span { display: none; }
 .pms-toast .toast-message { font-size: 0.9rem; opacity: 0.95; }
 .pms-toast .toast-close-button { color: rgba(255,255,255,0.8); }
 .pms-toast .progress-bar { background-color: rgba(255,255,255,0.4); }
-#toast-container { z-index: 9999; }

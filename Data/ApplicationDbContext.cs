@@ -17,6 +17,7 @@ namespace PatientManagementSystem.Data
         public DbSet<Patient> Patients => Set<Patient>();
         public DbSet<Condition> Conditions => Set<Condition>();
         public DbSet<PatientCondition> PatientConditions => Set<PatientCondition>();
+        public DbSet<PatientReport> PatientReports => Set<PatientReport>();
         public DbSet<Ward> Wards => Set<Ward>();
         public DbSet<Bed> Beds => Set<Bed>();
         public DbSet<BedAssignment> BedAssignments => Set<BedAssignment>();
@@ -45,10 +46,24 @@ namespace PatientManagementSystem.Data
                 b.Property(p => p.Address).HasMaxLength(300);
                 b.Property(p => p.EmergencyContact).HasMaxLength(150);
                 b.Property(p => p.BloodGroup).HasMaxLength(10);
-                b.Property(p => p.Allergies).HasMaxLength(400);
+                 b.Property(p => p.Allergies).HasMaxLength(400);
+                 b.Property(p => p.ImagePath).HasMaxLength(300);
                 b.Property(p => p.Status).HasConversion<int>();
                 b.Property(p => p.Gender).HasConversion<int>();
                 b.Property(p => p.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+             });
+
+            builder.Entity<PatientReport>(b =>
+            {
+                b.ToTable("PatientReports");
+                b.HasKey(r => r.Id);
+                b.Property(r => r.OriginalFileName).HasMaxLength(255).IsRequired();
+                b.Property(r => r.StoredFileName).HasMaxLength(100).IsRequired();
+                b.Property(r => r.FilePath).HasMaxLength(300).IsRequired();
+                b.Property(r => r.ContentType).HasMaxLength(100).IsRequired();
+                b.Property(r => r.UploadedAt).HasDefaultValueSql("GETUTCDATE()");
+                b.HasOne(r => r.Patient).WithMany(p => p.Reports)
+                    .HasForeignKey(r => r.PatientId).OnDelete(DeleteBehavior.Cascade);
             });
 
             builder.Entity<Condition>(b =>

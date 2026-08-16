@@ -16,7 +16,7 @@
     </div>
 </div>
 
-<div class="row g-3">
+<div class="row g-2 pms-bed-grid">
     @if (!Model.Any())
     {
         <div class="col-12"><div class="pms-card"><div class="pms-card-body"><div class="pms-empty"><i class="bi bi-inbox"></i>No beds in this ward yet.</div></div></div></div>
@@ -31,25 +31,26 @@
             _ => ""
         };
         var pillClass = b.Status switch { BedStatus.Available => "is-success", BedStatus.Occupied => "is-info", _ => "is-warning" };
-        <div class="col-12 col-md-4 col-xl-3">
-            <div class="pms-card @cardClass" style="border-width:2px;">
+        <div class="col-6 col-md-4 col-lg-3 col-xl-2">
+            <div class="pms-card pms-bed-card @cardClass" style="border-width:2px;">
                 <div class="pms-card-body text-center">
-                    <h3 class="fw-bold mb-1">@b.Number  <span class="pms-pill @pillClass">@b.Status</span></h3>
+                    <h3 class="fw-bold mb-1">@b.Number</h3>
+                    <span class="pms-pill @pillClass">@b.Status</span>
                     
                     @if (b.Status == BedStatus.Occupied && !string.IsNullOrEmpty(b.CurrentPatientName))
                     {
-                        <p class="small mt-3 mb-0 text-muted">@b.CurrentPatientName</p>
+                        <p class="small mt-2 mb-0 text-muted">@b.CurrentPatientName</p>
                         <p class="small text-muted">Admitted @b.AdmittedOn?.ToString("dd MMM")</p>
-                        <a asp-controller="BedAssignments" asp-action="Index">
-                            <button class="btn btn-sm btn-outline-danger" style="border-radius:8px;"><i class="bi bi-door-closed me-1"></i>Discharge</button>
+                        <a asp-controller="BedAssignments" asp-action="Index" class="btn btn-sm btn-outline-danger mt-2" style="border-radius:8px;">
+                            <i class="bi bi-door-closed me-1"></i>Discharge
                         </a>
                     }
                     @if (b.Status == BedStatus.Available)
                     {
-                        <a asp-controller="BedAssignments" asp-action="Admit" class="btn btn-sm btn-outline-success mt-3" style="border-radius:8px;"><i class="bi bi-hospital me-1"></i>Admit</a>
+                        <a asp-controller="BedAssignments" asp-action="Admit" class="btn btn-sm btn-outline-success mt-2" style="border-radius:8px;"><i class="bi bi-hospital me-1"></i>Admit</a>
                     }
                 </div>
-                <div class="card-footer bg-transparent d-flex justify-content-end gap-1 px-3 py-2">
+                <div class="card-footer bg-transparent d-flex justify-content-end gap-1 px-2 py-1">
                     <a asp-controller="Beds" asp-action="Edit" asp-route-id="@b.Id" class="btn btn-sm btn-light border"><i class="bi bi-pencil"></i></a>
                     @if (b.Status != BedStatus.Occupied)
                     {

@@ -12,8 +12,13 @@ namespace PatientManagementSystem.Controllers
     public class PatientsController : Controller
     {
         private readonly ApplicationDbContext _db;
+        private readonly IWebHostEnvironment _environment;
 
-        public PatientsController(ApplicationDbContext db) { _db = db; }
+        public PatientsController(ApplicationDbContext db, IWebHostEnvironment environment)
+        {
+            _db = db;
+            _environment = environment;
+        }
 
         [HttpGet]
         public IActionResult Index()
@@ -132,6 +137,14 @@ namespace PatientManagementSystem.Controllers
             _db.Patients.Add(patient);
             await _db.SaveChangesAsync();
 
+            if (!await SaveUploadsAsync(patient, vm.PatientImage, vm.Report))
+            {
+                _db.Patients.Remove(patient);
+                await _db.SaveChangesAsync();
+                return View(vm);
+            }
+            await _db.SaveChangesAsync();
+
             TempData["Success"] = $"Patient '{patient.FullName}' created (MRN {patient.Mrn}).";
             return RedirectToAction(nameof(Index));
         }
@@ -191,6 +204,8 @@ namespace PatientManagementSystem.Controllers
             p.IsActive = vm.IsActive;
             p.UpdatedAt = DateTime.UtcNow;
 
+            if (!await SaveUploadsAsync(p, vm.PatientImage, vm.Report)) return View(vm);
+
             await _db.SaveChangesAsync();
             TempData["Success"] = $"Patient '{p.FullName}' updated.";
             return RedirectToAction(nameof(Index));
@@ -199,7 +214,9 @@ namespace PatientManagementSystem.Controllers
         [HttpGet]
         public async Task<IActionResult> Details(int id)
         {
-            var p = await _db.Patients.FindAsync(id);
+            var p = await _db.Patients
+                .Include(patient => patient.Reports)
+                .FirstOrDefaultAsync(patient => patient.Id == id);
             if (p == null) return NotFound();
 
             var vm = new PatientDetailsViewModel
@@ -218,9 +235,28 @@ namespace PatientManagementSystem.Controllers
                 Status = p.Status,
                 IsActive = p.IsActive,
                 CreatedAt = p.CreatedAt,
-                UpdatedAt = p.UpdatedAt
+                UpdatedAt = p.UpdatedAt,
+                ImagePath = p.ImagePath,
+                Reports = p.Reports.OrderByDescending(report => report.UploadedAt).Select(report => new PatientReportViewModel
+                {
+                    Id = report.Id,
+                    OriginalFileName = report.OriginalFileName,
+                    ContentType = report.ContentType,
+                    UploadedAt = report.UploadedAt
+                }).ToList()
             };
             return View(vm);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> DownloadReport(int id)
+        {
+            var report = await _db.PatientReports.FindAsync(id);
+            if (report == null) return NotFound();
+
+            var path = Path.Combine(GetUploadRoot(), report.FilePath.Replace('/', Path.DirectorySeparatorChar));
+            if (!System.IO.File.Exists(path)) return NotFound();
+            return PhysicalFile(path, report.ContentType, report.OriginalFileName);
         }
 
         [HttpPost]
@@ -244,6 +280,66 @@ namespace PatientManagementSystem.Controllers
             var year = DateTime.UtcNow.Year;
             var rand = Random.Shared.Next(1000, 9999);
             return $"PMS-{year}-{rand}";
+        }
+
+        private async Task<bool> SaveUploadsAsync(Patient patient, IFormFile? image, IFormFile? report)
+        {
+            if (image != null && !ValidateUpload(image, new[] { ".jpg", ".jpeg", ".png", ".webp" }, 5 * 1024 * 1024, "Patient image"))
+                return false;
+            if (report != null && !ValidateUpload(report, new[] { ".pdf", ".doc", ".docx", ".xls", ".xlsx" }, 10 * 1024 * 1024, "Report"))
+                return false;
+
+            var directory = Path.Combine(GetUploadRoot(), "uploads", "patients", patient.Id.ToString());
+            Directory.CreateDirectory(directory);
+
+            if (image != null)
+            {
+                DeleteStoredFile(patient.ImagePath);
+                var fileName = $"image-{Guid.NewGuid():N}{Path.GetExtension(image.FileName).ToLowerInvariant()}";
+                var relativePath = $"uploads/patients/{patient.Id}/{fileName}";
+                await using var stream = System.IO.File.Create(Path.Combine(directory, fileName));
+                await image.CopyToAsync(stream);
+                patient.ImagePath = relativePath;
+            }
+
+            if (report != null)
+            {
+                var fileName = $"report-{Guid.NewGuid():N}{Path.GetExtension(report.FileName).ToLowerInvariant()}";
+                var relativePath = $"uploads/patients/{patient.Id}/{fileName}";
+                await using var stream = System.IO.File.Create(Path.Combine(directory, fileName));
+                await report.CopyToAsync(stream);
+                _db.PatientReports.Add(new PatientReport
+                {
+                    PatientId = patient.Id,
+                    OriginalFileName = Path.GetFileName(report.FileName),
+                    StoredFileName = fileName,
+                    FilePath = relativePath,
+                    ContentType = string.IsNullOrWhiteSpace(report.ContentType) ? "application/octet-stream" : report.ContentType,
+                    UploadedAt = DateTime.UtcNow
+                });
+            }
+
+            return true;
+        }
+
+        private bool ValidateUpload(IFormFile file, string[] extensions, long maxLength, string label)
+        {
+            var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (file.Length == 0 || file.Length > maxLength || !extensions.Contains(extension))
+            {
+                ModelState.AddModelError(string.Empty, $"{label} must be one of {string.Join(", ", extensions)} and no larger than {maxLength / (1024 * 1024)} MB.");
+                return false;
+            }
+            return true;
+        }
+
+        private string GetUploadRoot() => _environment.WebRootPath ?? Path.Combine(_environment.ContentRootPath, "wwwroot");
+
+        private void DeleteStoredFile(string? relativePath)
+        {
+            if (string.IsNullOrWhiteSpace(relativePath)) return;
+            var path = Path.Combine(GetUploadRoot(), relativePath.Replace('/', Path.DirectorySeparatorChar));
+            if (System.IO.File.Exists(path)) System.IO.File.Delete(path);
         }
     }
 }
